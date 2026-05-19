@@ -67,10 +67,8 @@ let simRunning = false;
 let simFrame = 0;
 let simSlopeGrid = null;                   // precomputed slope (deg) per cell
 
-// Plain / Detailed mode -----------------------------------------------------
-// Plain mode (default) = white terrain, no trees, no hazard textures - clean
-// 3D massing for thesis intro figures. Detailed mode = full textured layers
-// with trees + satellite imagery / hazard maps.
+// Trees on/off toggle (button). Plain = trees hidden. Independent of the
+// hazard-layer selection - layers always work whether trees are shown or not.
 let plainMode = true;
 let plainTerrainMat, texturedTerrainMat;
 
@@ -147,6 +145,15 @@ async function init() {
   const binBuf = await fetch(`${DATA}/terrain.bin`).then(r => r.arrayBuffer());
   elevations = new Float32Array(binBuf);
 
+  // Prepend a "Plain" pseudo-layer so users can pick pure-white terrain.
+  // Default active layer = plain, so first paint is white as requested.
+  meta.layers.unshift({
+    id: 'plain',
+    name: 'Plain (white)',
+    description: 'Pure white terrain - schematic massing without any hazard overlay.',
+  });
+  activeLayerId = 'plain';
+
   const loader = new THREE.TextureLoader();
   async function loadTex(name) {
     const t = await loader.loadAsync(`${DATA}/${name}`);
@@ -155,7 +162,7 @@ async function init() {
     return t;
   }
 
-  // Shared layer textures + per-scenario textures.
+  // Shared layer textures + per-scenario textures. 'plain' has neither.
   for (const L of meta.layers) {
     if (L.texture) {
       layerTextures[L.id] = await loadTex(L.texture);
@@ -718,8 +725,8 @@ function activeLayerNeedsScenario(id) {
 
 function refreshLayerTexture() {
   if (!terrainMesh) return;
-  // Plain mode wins unconditionally: pure white terrain, no hazard texture.
-  if (plainMode) {
+  // The "plain" pseudo-layer = pure white terrain, no hazard texture.
+  if (activeLayerId === 'plain') {
     terrainMesh.material = plainTerrainMat;
     texturedTerrainMat.map = null;
     texturedTerrainMat.needsUpdate = true;
@@ -739,35 +746,19 @@ function refreshLayerTexture() {
   }
 }
 
+// "Plain" mode = trees hidden only. Hazard layers are always interactive.
 function setPlainMode(on) {
   plainMode = !!on;
-  refreshLayerTexture();
   if (treesGroup) treesGroup.visible = !plainMode;
-  // Visually mute + disable the hazard layer panel in plain mode.
-  const layersEl = document.getElementById('layers');
-  const scenariosEl = document.getElementById('scenarios');
-  if (layersEl) {
-    layersEl.style.opacity = plainMode ? 0.45 : 1;
-    layersEl.style.pointerEvents = plainMode ? 'none' : 'auto';
-  }
-  if (scenariosEl) {
-    scenariosEl.style.opacity = plainMode ? 0.45 : 1;
-    scenariosEl.style.pointerEvents = plainMode ? 'none' : 'auto';
-  }
   const btn = document.getElementById('plain-toggle');
-  if (btn) btn.textContent = plainMode ? 'Switch to Detailed' : 'Switch to Plain';
+  if (btn) btn.textContent = plainMode ? 'Show trees' : 'Hide trees';
   const indicator = document.getElementById('mode-indicator');
-  if (indicator) indicator.textContent = plainMode ? 'Plain (schematic)' : 'Detailed';
+  if (indicator) indicator.textContent = plainMode ? 'Hidden' : 'Visible';
 }
 
 function setLayer(id) {
   activeLayerId = id;
-  // Plain mode keeps the terrain white - never apply the hazard texture.
-  if (plainMode) {
-    terrainMesh.material = plainTerrainMat;
-  } else {
-    refreshLayerTexture();
-  }
+  refreshLayerTexture();
   const layer = meta.layers.find(l => l.id === id);
   document.getElementById('layer-desc').textContent = layer.description;
   const legend = document.getElementById('legend');
