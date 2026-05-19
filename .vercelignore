@@ -1,0 +1,33 @@
+# =============================================================================
+# Files NOT uploaded to Vercel.
+# The deployment is purely static (viewer/ only). Everything below this
+# comment is irrelevant at the edge: it either belongs to the local pipeline,
+# the local venv, or is documentation.
+# =============================================================================
+
+# Python pipeline + environment
+.venv/
+__pycache__/
+*.pyc
+landslide/
+make_docx.py
+run_pipeline.py
+*.py
+requirements.txt
+pyproject.toml
+
+# Pipeline data (already exported into viewer/data/ for the browser)
+data/
+
+# Documentation (not needed at the edge)
+docs/
+
+# Project configuration files only the local pipeline reads
+config.yaml
+note.txt
+
+# Misc
+*.jsonl
+*.md
+.DS_Store
+Thumbs.db

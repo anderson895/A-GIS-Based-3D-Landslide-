@@ -32,7 +32,8 @@
       "Bash(./.venv/Scripts/python.exe run_pipeline.py --only export)",
       "Bash(cp viewer/main.js /tmp/check.mjs)",
       "Bash(node --check /tmp/check.mjs)",
-      "Bash(./.venv/Scripts/python.exe -m pip install python-docx)"
+      "Bash(./.venv/Scripts/python.exe -m pip install python-docx)",
+      "Bash(./.venv/Scripts/python.exe make_docx.py)"
     ]
   }
 }
