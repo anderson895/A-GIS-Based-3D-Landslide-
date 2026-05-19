@@ -19,6 +19,9 @@ const BUILDING_BASE_HEIGHT     = 0.25;    // small base trim
 const BUILDING_FLAG_HEIGHT     = 5.0;     // tiny flagpole on top - locator at distance
 const ROAD_WIDTH_M = 28.0;
 const ROAD_Y_OFFSET = 0.6;
+const WATERWAY_WIDTH_M = 14.0;
+const WATERWAY_Y_OFFSET = 0.3;
+const WATERWAY_COLOR = 0x4ec3ff;
 
 // Procedural schoolhouse colours (warm cream + terracotta).
 const SCHOOL_COLORS = {
@@ -51,6 +54,9 @@ const PRESETS = {
 let renderer, scene, camera, controls, dirLight;
 let terrainGroup, terrainMesh, skirtMesh, markerGroup;
 let featuresGroup, buildingsGroup, roadsGroup, treesGroup;
+let waterwaysGroup, environmentGroup;            // streams + POIs/peaks/labels
+let boundariesGroup;                             // admin boundary walls
+let leafletMap;                                  // 2D minimap (Leaflet)
 let meta, elevations, features = null;
 let worldScale = 1;
 let currentScenario = 'normal';
@@ -190,9 +196,15 @@ async function init() {
   buildTerrain();
   buildSkirt();
   buildTrees();
-  if (features) buildFeatures();
+  if (features) {
+    buildFeatures();
+    buildWaterways();
+    buildEnvironmentFeatures();
+    buildBoundaries();
+  }
   buildMarker();
   buildSimulation();
+  buildMinimap();
   if (treesGroup) treesGroup.visible = !plainMode;
   buildUI();
   setLayer(activeLayerId);
@@ -660,6 +672,315 @@ function buildFeatures() {
 }
 
 // ---------------------------------------------------------------------------
+// Waterways - rivers / streams / creeks as blue draped ribbons.
+// ---------------------------------------------------------------------------
+function buildWaterways() {
+  if (!features?.waterways?.length) return;
+  waterwaysGroup = new THREE.Group();
+  const ws = features.world_scale;
+  const minE = meta.elev_min;
+  const halfW = (WATERWAY_WIDTH_M / 2) * ws;
+  const mat = new THREE.MeshStandardMaterial({
+    color: WATERWAY_COLOR, emissive: WATERWAY_COLOR, emissiveIntensity: 0.55,
+    roughness: 0.25, metalness: 0.0, side: THREE.DoubleSide, transparent: true,
+    opacity: 0.92,
+  });
+  for (const w of features.waterways) {
+    const line = w.line;
+    if (line.length < 2) continue;
+    const positions = []; const indices = [];
+    for (let i = 0; i < line.length; i++) {
+      const p = line[i];
+      let dx = 0, dz = 0;
+      if (i > 0) { dx += p[0] - line[i-1][0]; dz += p[1] - line[i-1][1]; }
+      if (i < line.length - 1) { dx += line[i+1][0] - p[0]; dz += line[i+1][1] - p[1]; }
+      const len = Math.hypot(dx, dz) || 1;
+      const px = -dz / len, pz = dx / len;
+      const yWorld = (p[2] - minE) * ws + WATERWAY_Y_OFFSET;
+      positions.push(p[0] + px * halfW, yWorld, p[1] + pz * halfW);
+      positions.push(p[0] - px * halfW, yWorld, p[1] - pz * halfW);
+    }
+    for (let i = 0; i < line.length - 1; i++) {
+      const a = i * 2;
+      indices.push(a, a+1, a+2, a+2, a+1, a+3);
+    }
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    const mesh = new THREE.Mesh(geom, mat);
+    waterwaysGroup.add(mesh);
+  }
+  terrainGroup.add(waterwaysGroup);
+  console.log(`Rendered ${features.waterways.length} waterway segments`);
+}
+
+// ---------------------------------------------------------------------------
+// Environment features - place names, POIs (Malico Viewpoint etc.), peaks,
+// and named-road / named-river labels. Everything goes into a single group
+// so users can toggle all annotations at once.
+// ---------------------------------------------------------------------------
+function buildEnvironmentFeatures() {
+  if (!features) return;
+  environmentGroup = new THREE.Group();
+  const ws = features.world_scale;
+  const minE = meta.elev_min;
+
+  // --- Peaks: small brown cone + elevation label -----------------------
+  const peakGeo = new THREE.ConeGeometry(1.6, 4, 6);
+  const peakMat = new THREE.MeshStandardMaterial({
+    color: 0x8b5a2b, emissive: 0x3a2410, emissiveIntensity: 0.4,
+    roughness: 0.85 });
+  for (const peak of features.peaks || []) {
+    const wy = (peak.elev_m - minE) * ws;
+    const cone = new THREE.Mesh(peakGeo, peakMat);
+    cone.position.set(peak.x, wy + 2, peak.z);
+    cone.castShadow = true;
+    environmentGroup.add(cone);
+    const label = peak.name
+      ? `${peak.name} - ${peak.elev_m.toFixed(0)} m`
+      : `Peak ${peak.elev_m.toFixed(0)} m`;
+    const sprite = makeTextSprite(label, {
+      bg: 'rgba(40,30,15,0.88)', stroke: '#c89060' });
+    sprite.position.set(peak.x, wy + 8, peak.z);
+    sprite.scale.set(20, 5, 1);
+    environmentGroup.add(sprite);
+  }
+
+  // --- POIs (Malico Viewpoint, schools, churches, etc.) ---------------
+  const poiGeo = new THREE.SphereGeometry(0.7, 12, 8);
+  for (const poi of features.pois || []) {
+    const wy = (poi.elev_m - minE) * ws;
+    const isViewpoint = poi.subtype === 'viewpoint';
+    const isReligion  = poi.subtype === 'place_of_worship';
+    const isSchool    = poi.subtype === 'school' || poi.subtype === 'kindergarten';
+    let markerColor = 0x4ec3ff, strokeHex = '#4ec3ff';
+    if (isViewpoint) { markerColor = 0xffb05a; strokeHex = '#ffb05a'; }
+    else if (isReligion) { markerColor = 0xc890ff; strokeHex = '#c890ff'; }
+    else if (isSchool) { markerColor = 0xffd84a; strokeHex = '#ffd84a'; }
+    const mat = new THREE.MeshStandardMaterial({
+      color: markerColor, emissive: markerColor, emissiveIntensity: 0.7,
+      roughness: 0.3 });
+    const sphere = new THREE.Mesh(poiGeo, mat);
+    sphere.position.set(poi.x, wy + 2.0, poi.z);
+    environmentGroup.add(sphere);
+    const label = poi.name || poi.subtype;
+    const sprite = makeTextSprite(label, {
+      bg: 'rgba(20,18,14,0.88)', stroke: strokeHex });
+    sprite.position.set(poi.x, wy + 8, poi.z);
+    sprite.scale.set(22, 5.5, 1);
+    environmentGroup.add(sprite);
+  }
+
+  // --- Place names: villages / hamlets / sitios -----------------------
+  for (const place of features.places || []) {
+    const wy = (place.elev_m - minE) * ws;
+    const big = (place.type === 'town' || place.type === 'village');
+    const sprite = makeTextSprite(place.name || place.type, {
+      bg: 'rgba(15,18,26,0.92)', stroke: '#ffffff' });
+    sprite.position.set(place.x, wy + (big ? 14 : 9), place.z);
+    sprite.scale.set(big ? 28 : 22, big ? 7 : 5.5, 1);
+    environmentGroup.add(sprite);
+  }
+
+  // --- Named-road labels (place a sprite at the midpoint) ------------
+  const seenRoadNames = new Set();
+  for (const road of features.roads || []) {
+    if (!road.name || road.line.length < 2) continue;
+    if (seenRoadNames.has(road.name)) continue;       // avoid duplicates for both directions
+    seenRoadNames.add(road.name);
+    const mid = road.line[Math.floor(road.line.length / 2)];
+    const wy = (mid[2] - minE) * ws + 3;
+    const sprite = makeTextSprite(road.name, {
+      bg: 'rgba(30,22,10,0.86)', stroke: '#ffd84a' });
+    sprite.position.set(mid[0], wy, mid[1]);
+    sprite.scale.set(22, 4.5, 1);
+    environmentGroup.add(sprite);
+  }
+
+  // --- Named-river labels --------------------------------------------
+  for (const w of features.waterways || []) {
+    if (!w.name || w.line.length < 2) continue;
+    const mid = w.line[Math.floor(w.line.length / 2)];
+    const wy = (mid[2] - minE) * ws + 3;
+    const sprite = makeTextSprite(w.name, {
+      bg: 'rgba(10,30,60,0.88)', stroke: '#4ec3ff' });
+    sprite.position.set(mid[0], wy, mid[1]);
+    sprite.scale.set(20, 4.5, 1);
+    environmentGroup.add(sprite);
+  }
+
+  terrainGroup.add(environmentGroup);
+}
+
+// ---------------------------------------------------------------------------
+// Admin boundaries - "sakop" of each place rendered as colored draped walls.
+// Each boundary gets a distinct hue. Segments outside the AOI are skipped
+// (their terrain isn't visible anyway). Color is also stored on the boundary
+// object so buildMinimap() can use the same hue on the 2D Leaflet view.
+// ---------------------------------------------------------------------------
+const BOUNDARY_WALL_HEIGHT = 3.0;       // world units; ~135 m of mountain
+const BOUNDARY_LABEL_HEIGHT = 6.0;
+function buildBoundaries() {
+  if (!features?.boundaries?.length) return;
+  boundariesGroup = new THREE.Group();
+  const ws = features.world_scale;
+  const minE = meta.elev_min;
+  const W = meta.generated_grid.width;
+  const H = meta.generated_grid.height;
+  const cellX = meta.cell_x_m, cellY = meta.cell_y_m;
+  const halfX = (W - 1) / 2 * cellX * ws;
+  const halfZ = (H - 1) / 2 * cellY * ws;
+  const inAOI = (x, z) => Math.abs(x) <= halfX && Math.abs(z) <= halfZ;
+
+  features.boundaries.forEach((b, idx) => {
+    // Distinct hue per boundary using the golden-angle increment for
+    // good perceptual separation even with many polygons.
+    const hue = (idx * 137.508) % 360;
+    const isMuni = b.admin_level <= 6;
+    const color = new THREE.Color().setHSL(
+      hue / 360, isMuni ? 0.85 : 0.7, isMuni ? 0.55 : 0.52);
+    const colorHex = `#${color.getHexString()}`;
+    b._color = colorHex;                          // shared with Leaflet
+
+    const verts = b.world;        // [[wx, wz, elev], ...]
+    const positions = [];
+    const indices = [];
+    const inAOIWy = [];           // collect in-AOI world y for label placement
+    let inAOIxz = [];             // collect in-AOI xz for centroid
+    let vi = 0;
+    for (let i = 0; i < verts.length - 1; i++) {
+      const [x1, z1, e1] = verts[i];
+      const [x2, z2, e2] = verts[i + 1];
+      if (!(inAOI(x1, z1) && inAOI(x2, z2))) continue;
+      const y1 = (e1 - minE) * ws;
+      const y2 = (e2 - minE) * ws;
+      positions.push(x1, y1, z1);
+      positions.push(x1, y1 + BOUNDARY_WALL_HEIGHT, z1);
+      positions.push(x2, y2, z2);
+      positions.push(x2, y2 + BOUNDARY_WALL_HEIGHT, z2);
+      indices.push(vi, vi + 1, vi + 2);
+      indices.push(vi + 2, vi + 1, vi + 3);
+      vi += 4;
+      inAOIxz.push([x1, z1]); inAOIxz.push([x2, z2]);
+      inAOIWy.push(y1, y2);
+    }
+    if (positions.length === 0) return;          // boundary doesn't touch AOI
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    const mat = new THREE.MeshStandardMaterial({
+      color: color.getHex(), emissive: color.getHex(), emissiveIntensity: 0.55,
+      roughness: 0.4, side: THREE.DoubleSide,
+      transparent: true, opacity: 0.85,
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    boundariesGroup.add(mesh);
+
+    // Label: average of in-AOI vertices.
+    let lx = 0, lz = 0, ly = 0;
+    for (const [x, z] of inAOIxz) { lx += x; lz += z; }
+    for (const y of inAOIWy) ly += y;
+    lx /= inAOIxz.length; lz /= inAOIxz.length; ly /= inAOIWy.length;
+    const sprite = makeTextSprite(`${b.name} (AL${b.admin_level})`, {
+      bg: 'rgba(15,18,26,0.92)', stroke: colorHex });
+    sprite.position.set(lx, ly + BOUNDARY_LABEL_HEIGHT, lz);
+    sprite.scale.set(28, 7, 1);
+    boundariesGroup.add(sprite);
+  });
+
+  terrainGroup.add(boundariesGroup);
+  console.log(`Rendered ${boundariesGroup.children.length} boundary objects`);
+}
+
+// ---------------------------------------------------------------------------
+// 2D Leaflet minimap - online OSM tiles give full street-level detail that
+// the offline 3D viewer cannot show (every footpath, every contour name).
+// ---------------------------------------------------------------------------
+function buildMinimap() {
+  if (typeof L === 'undefined') {
+    console.warn('Leaflet not loaded - minimap disabled');
+    return;
+  }
+  const aoi = meta.aoi_wgs84;
+  const cy = (aoi.min_lat + aoi.max_lat) / 2;
+  const cx = (aoi.min_lon + aoi.max_lon) / 2;
+
+  leafletMap = L.map('minimap', {
+    center: [cy, cx], zoom: 13,
+    zoomControl: true, attributionControl: true,
+    preferCanvas: true,
+  });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(leafletMap);
+
+  // Boundaries first (so points render on top).
+  for (const b of (features?.boundaries || [])) {
+    const color = b._color || '#ff5a5a';
+    const isMuni = b.admin_level <= 6;
+    L.polygon(b.latlon, {
+      color, weight: isMuni ? 3 : 2,
+      fillColor: color, fillOpacity: isMuni ? 0.08 : 0.18,
+      dashArray: isMuni ? '8 4' : null,
+    }).addTo(leafletMap)
+      .bindPopup(`<b>${b.name}</b><br>admin_level ${b.admin_level} `
+                 + `(${isMuni ? 'municipality' : 'barangay'})`);
+  }
+
+  // AOI rectangle (the 3D model's footprint)
+  L.rectangle([[aoi.min_lat, aoi.min_lon], [aoi.max_lat, aoi.max_lon]], {
+    color: '#ff5a5a', weight: 2, fillOpacity: 0.0, dashArray: '6 4',
+  }).addTo(leafletMap).bindTooltip('3D model AOI');
+
+  // Site marker
+  L.marker([meta.site.lat, meta.site.lon])
+    .addTo(leafletMap)
+    .bindPopup(`<b>${meta.site.label}</b><br>${meta.site.lat.toFixed(4)}, ${meta.site.lon.toFixed(4)}`);
+
+  // Peaks
+  for (const peak of (features?.peaks || [])) {
+    L.circleMarker([peak.lat, peak.lon], {
+      radius: 5, color: '#8b5a2b', fillColor: '#c89060',
+      weight: 2, fillOpacity: 0.85,
+    }).addTo(leafletMap)
+      .bindPopup(`<b>Mountain peak</b><br>${peak.elev_m.toFixed(0)} m a.s.l.`);
+  }
+  // POIs
+  for (const poi of (features?.pois || [])) {
+    const color = poi.subtype === 'viewpoint' ? '#ffb05a'
+                : poi.subtype === 'place_of_worship' ? '#c890ff'
+                : (poi.subtype || '').includes('school') ? '#ffd84a'
+                : '#4ec3ff';
+    L.circleMarker([poi.lat, poi.lon], {
+      radius: 6, color, fillColor: color, weight: 2, fillOpacity: 0.85,
+    }).addTo(leafletMap)
+      .bindPopup(`<b>${poi.name || poi.subtype}</b><br>${poi.category} / ${poi.subtype}`);
+  }
+  // Named places (villages/sitios)
+  for (const place of (features?.places || [])) {
+    L.marker([place.lat, place.lon]).addTo(leafletMap)
+      .bindPopup(`<b>${place.name || place.type}</b><br>${place.type}`);
+  }
+
+  leafletMap.fitBounds(
+    [[aoi.min_lat, aoi.min_lon], [aoi.max_lat, aoi.max_lon]],
+    { padding: [8, 8] });
+}
+
+function toggleMinimap(show) {
+  const el = document.getElementById('minimap-wrap');
+  if (!el) return;
+  el.style.display = show ? 'block' : 'none';
+  if (show && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 80);
+}
+
+// ---------------------------------------------------------------------------
 // Marker
 // ---------------------------------------------------------------------------
 function buildMarker() {
@@ -894,6 +1215,24 @@ function buildUI() {
     e => { markerGroup.visible = e.target.checked; });
   document.getElementById('features-toggle').addEventListener('change',
     e => { if (featuresGroup) featuresGroup.visible = e.target.checked; });
+  const waterToggle = document.getElementById('waterways-toggle');
+  if (waterToggle) waterToggle.addEventListener('change',
+    e => { if (waterwaysGroup) waterwaysGroup.visible = e.target.checked; });
+  const envToggle = document.getElementById('environment-toggle');
+  if (envToggle) envToggle.addEventListener('change',
+    e => { if (environmentGroup) environmentGroup.visible = e.target.checked; });
+  const boundToggle = document.getElementById('boundaries-toggle');
+  if (boundToggle) boundToggle.addEventListener('change',
+    e => { if (boundariesGroup) boundariesGroup.visible = e.target.checked; });
+  const minimapToggle = document.getElementById('minimap-toggle');
+  if (minimapToggle) minimapToggle.addEventListener('change',
+    e => toggleMinimap(e.target.checked));
+  const minimapClose = document.getElementById('minimap-close');
+  if (minimapClose) minimapClose.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleMinimap(false);
+    if (minimapToggle) minimapToggle.checked = false;
+  });
   document.getElementById('reset').addEventListener('click',
     () => applyPreset('oblique'));
   document.getElementById('screenshot').addEventListener('click', takeScreenshot);

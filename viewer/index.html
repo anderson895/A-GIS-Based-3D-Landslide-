@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3D Landslide Hazard Visualization - Malico, San Nicolas, Pangasinan</title>
+  <link rel="stylesheet" href="./lib/leaflet.css" />
   <link rel="stylesheet" href="./style.css" />
+  <script src="./lib/leaflet.js"></script>
   <script type="importmap">
   {
     "imports": {
@@ -73,8 +75,24 @@
         Show buildings &amp; roads
       </label>
       <label class="ctrl checkbox">
+        <input type="checkbox" id="waterways-toggle" checked />
+        Show rivers &amp; streams
+      </label>
+      <label class="ctrl checkbox">
+        <input type="checkbox" id="environment-toggle" checked />
+        Show place / road / peak labels
+      </label>
+      <label class="ctrl checkbox">
+        <input type="checkbox" id="boundaries-toggle" checked />
+        Show place boundaries (sakop)
+      </label>
+      <label class="ctrl checkbox">
         <input type="checkbox" id="marker-toggle" checked />
         Show Brgy. Malico marker
+      </label>
+      <label class="ctrl checkbox">
+        <input type="checkbox" id="minimap-toggle" checked />
+        Show 2D OSM minimap
       </label>
       <div class="btn-row">
         <button data-preset="oblique">Oblique</button>
@@ -97,6 +115,16 @@
     <p class="hint">Drag to orbit &middot; scroll to zoom &middot; right-drag to pan</p>
   </aside>
 
-  <script type="module" src="./main.js?v=4"></script>
+  <!-- 2D Leaflet minimap - default on (toggle via the View Controls checkbox) -->
+  <div id="minimap-wrap">
+    <div class="minimap-title">
+      <span>2D OSM map - full street detail</span>
+      <a href="#" id="minimap-close" title="Hide minimap">&times;</a>
+    </div>
+    <div id="minimap"></div>
+    <p class="minimap-hint">Click any feature for details.</p>
+  </div>
+
+  <script type="module" src="./main.js?v=7"></script>
 </body>
 </html>

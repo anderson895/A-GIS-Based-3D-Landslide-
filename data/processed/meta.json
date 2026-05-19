@@ -31,7 +31,14 @@
   },
   "features": {
     "buildings": 6,
-    "roads": 15
+    "roads": 15,
+    "waterways": 47,
+    "water_bodies": 0,
+    "landuse": 0,
+    "places": 0,
+    "pois": 1,
+    "peaks": 1,
+    "boundaries": 24
   },
   "hydrology": {
     "max_accum": 2703,

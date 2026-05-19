@@ -27,7 +27,11 @@
       "WebFetch(domain:www.philatlas.com)",
       "Bash(./.venv/Scripts/python.exe run_pipeline.py --from imagery)",
       "Bash(./.venv/Scripts/python.exe -c \"import json; d=json.load\\(open\\('viewer/data/terrain.json'\\)\\); [print\\(' -', l['id'], l.get\\('texture','\\(scenario\\)'\\)\\) for l in d['layers']]\")",
-      "Bash(./.venv/Scripts/python.exe run_pipeline.py --only diagnostics)"
+      "Bash(./.venv/Scripts/python.exe run_pipeline.py --only diagnostics)",
+      "Bash(./.venv/Scripts/python.exe run_pipeline.py --only features)",
+      "Bash(./.venv/Scripts/python.exe run_pipeline.py --only export)",
+      "Bash(cp viewer/main.js /tmp/check.mjs)",
+      "Bash(node --check /tmp/check.mjs)"
     ]
   }
 }

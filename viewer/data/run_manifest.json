@@ -1,6 +1,6 @@
 {
-  "run_at": "2026-05-19T23:05:45",
-  "duration_seconds": 0.1,
+  "run_at": "2026-05-20T00:06:27",
+  "duration_seconds": 10.3,
   "python": "3.10.0",
   "platform": "Windows-10-10.0.26100-SP0",
   "libraries": {
@@ -55,36 +55,26 @@
     }
   },
   "stage_results": {
-    "diagnostics": {
-      "dem_no_nan": true,
-      "dem_no_zero_edge": true,
-      "slope_realistic": true,
-      "slope_mean_steep": true,
-      "fs_finite": true,
-      "runout_present": true,
-      "sources_present": true,
-      "viewer:terrain.bin": true,
-      "viewer:terrain.json": true,
-      "viewer:tex_hillshade.png": true,
-      "viewer:tex_slope.png": true,
-      "viewer:tex_susc_dry.png": true,
-      "viewer:tex_runout_dry.png": true,
-      "viewer:tex_susc_normal.png": true,
-      "viewer:tex_runout_normal.png": true,
-      "viewer:tex_susc_wet.png": true,
-      "viewer:tex_runout_wet.png": true,
-      "viewer:tex_susc_extreme.png": true,
-      "viewer:tex_runout_extreme.png": true
+    "features": {
+      "buildings": 6,
+      "roads": 15,
+      "waterways": 47,
+      "water_bodies": 0,
+      "landuse": 0,
+      "places": 0,
+      "pois": 1,
+      "peaks": 1,
+      "boundaries": 24
     }
   },
   "output_hashes": {
     "features.json": {
-      "sha256": "7e4e4b45c1372981d63a73229a7db3aff61458c58fa7cd2fa29383e49be2ffa4",
-      "size": 70715
+      "sha256": "c99d4164e6fb45f465ad5eed7601040f3e2e6f8c097ef5fd72b3387100baa17a",
+      "size": 130481
     },
     "run_manifest.json": {
-      "sha256": "10ea4cd8bc240f3264ce1f6a7a5f787b3fa93fbb54d5d8ddfb05fefad6e14c75",
-      "size": 14966
+      "sha256": "6bda3158ddb73c74680dca0259e2d23b00f14dd91ea71c312807dfed296cf447",
+      "size": 10703
     },
     "terrain.bin": {
       "sha256": "2771dd0d0fb048975d7c523a3d3c0d621c7cd2dda410a27ab5d1b8debc8b8325",
