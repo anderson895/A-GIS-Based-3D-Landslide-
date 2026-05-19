@@ -1,0 +1,16 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Large data products - regenerate with: python run_pipeline.py
+data/raw/*.tif
+data/processed/*.tif
+data/processed/*.npy
+data/outputs/*.bin
+data/outputs/*.png
+
+# Keep folder structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/outputs/.gitkeep

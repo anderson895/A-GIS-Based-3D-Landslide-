@@ -1,0 +1,146 @@
+{
+  "run_at": "2026-05-19T23:05:45",
+  "duration_seconds": 0.1,
+  "python": "3.10.0",
+  "platform": "Windows-10-10.0.26100-SP0",
+  "libraries": {
+    "numpy": "2.2.6",
+    "scipy": "1.15.3",
+    "rasterio": "1.4.4",
+    "pillow": "12.2.0",
+    "requests": "2.34.2",
+    "pyyaml": "6.0.3",
+    "matplotlib": "3.10.9"
+  },
+  "config_snapshot": {
+    "project": {
+      "name": "GIS-Based 3D Landslide Hazard Visualization Model",
+      "area": "Malico, San Nicolas, Pangasinan, Philippines"
+    },
+    "site": {
+      "center_lat": 16.1573,
+      "center_lon": 120.8267,
+      "label": "Brgy. Malico"
+    },
+    "aoi": {
+      "min_lon": 120.787,
+      "min_lat": 16.117,
+      "max_lon": 120.867,
+      "max_lat": 16.197
+    },
+    "dem": {
+      "source": "Copernicus GLO-30 DSM",
+      "tile_url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N16_00_E120_00_DEM/Copernicus_DSM_COG_10_N16_00_E120_00_DEM.tif",
+      "target_epsg": 32651
+    },
+    "geotech": {
+      "cohesion_kpa": 5.0,
+      "friction_angle_deg": 30.0,
+      "unit_weight_kn_m3": 18.0,
+      "water_unit_weight_kn_m3": 9.81,
+      "soil_depth_m": 2.0,
+      "groundwater_ratio": 0.5
+    },
+    "runout": {
+      "travel_angle_deg": 26.0,
+      "source_fs_threshold": 1.0,
+      "source_slope_min_deg": 30.0,
+      "deposition_slope_deg": 10.0
+    },
+    "viz": {
+      "vertical_exaggeration": 1.8,
+      "hillshade_azimuth": 315,
+      "hillshade_altitude": 45,
+      "max_grid": 600
+    }
+  },
+  "stage_results": {
+    "diagnostics": {
+      "dem_no_nan": true,
+      "dem_no_zero_edge": true,
+      "slope_realistic": true,
+      "slope_mean_steep": true,
+      "fs_finite": true,
+      "runout_present": true,
+      "sources_present": true,
+      "viewer:terrain.bin": true,
+      "viewer:terrain.json": true,
+      "viewer:tex_hillshade.png": true,
+      "viewer:tex_slope.png": true,
+      "viewer:tex_susc_dry.png": true,
+      "viewer:tex_runout_dry.png": true,
+      "viewer:tex_susc_normal.png": true,
+      "viewer:tex_runout_normal.png": true,
+      "viewer:tex_susc_wet.png": true,
+      "viewer:tex_runout_wet.png": true,
+      "viewer:tex_susc_extreme.png": true,
+      "viewer:tex_runout_extreme.png": true
+    }
+  },
+  "output_hashes": {
+    "features.json": {
+      "sha256": "7e4e4b45c1372981d63a73229a7db3aff61458c58fa7cd2fa29383e49be2ffa4",
+      "size": 70715
+    },
+    "run_manifest.json": {
+      "sha256": "10ea4cd8bc240f3264ce1f6a7a5f787b3fa93fbb54d5d8ddfb05fefad6e14c75",
+      "size": 14966
+    },
+    "terrain.bin": {
+      "sha256": "2771dd0d0fb048975d7c523a3d3c0d621c7cd2dda410a27ab5d1b8debc8b8325",
+      "size": 338624
+    },
+    "terrain.json": {
+      "sha256": "8c341f9b4769837a8a603f88953a7e61f9f0a42de3714ce3c08fb0c1f08669c9",
+      "size": 5904
+    },
+    "tex_channels.png": {
+      "sha256": "bc5b0dafdcfcb90bb7a6edaf6c5b27aa721f63f824423eb10f9224e648758853",
+      "size": 133174
+    },
+    "tex_hillshade.png": {
+      "sha256": "6573b9088638ca7ad25c22c31faf4bfa8b2e205fa58a201707da3ea8eb305338",
+      "size": 97177
+    },
+    "tex_runout_dry.png": {
+      "sha256": "251c377605a7054162a419ed58272c91ad6ed8fda633ac28f9ecd9aef06d48d3",
+      "size": 131843
+    },
+    "tex_runout_extreme.png": {
+      "sha256": "67e705c68defc16107b42c6de8282fb6ca6617326fa9d74fa1bf3fb5bc04482c",
+      "size": 146648
+    },
+    "tex_runout_normal.png": {
+      "sha256": "ce30baa2c3d877bf3717cc0394685bc7d0eeccac3da6522d08200cd23263063d",
+      "size": 148424
+    },
+    "tex_runout_wet.png": {
+      "sha256": "67e705c68defc16107b42c6de8282fb6ca6617326fa9d74fa1bf3fb5bc04482c",
+      "size": 146648
+    },
+    "tex_satellite.png": {
+      "sha256": "6123fe31f441355574d00c4dfd5d033d2b93f0a667e883ff0fa291aaa0b2c91e",
+      "size": 194637
+    },
+    "tex_slope.png": {
+      "sha256": "8711239531730439b611aedd48e8f767331ba2acb0eaea7b419d1c92355b4a7f",
+      "size": 247789
+    },
+    "tex_susc_dry.png": {
+      "sha256": "a7623fdcd2beba5fb35e2a429916af3a0847cd1fedfbfde0ccfec349782a1193",
+      "size": 212509
+    },
+    "tex_susc_extreme.png": {
+      "sha256": "b28194282f7d1f5b94e9a20f4b1c1f022edef01fd42dfd795e4665b85a5f1200",
+      "size": 192591
+    },
+    "tex_susc_normal.png": {
+      "sha256": "431449bdfe9d16d7cf051a3348e8ea4a262ac1528d2acc20f6f5a8b55b48931f",
+      "size": 216364
+    },
+    "tex_susc_wet.png": {
+      "sha256": "5b029b9ac1d4feb0a80b5a4d013b8dc5ae1cbb7d27b84c0245e27fc5d458c660",
+      "size": 210429
+    }
+  }
+}

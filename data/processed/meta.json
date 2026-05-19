@@ -1,0 +1,251 @@
+{
+  "width": 286,
+  "height": 296,
+  "cell_x_m": 30.236195698743224,
+  "cell_y_m": 30.236195698743224,
+  "epsg": 32651,
+  "transform": [
+    30.236195698743224,
+    0.0,
+    263295.4387907174,
+    0.0,
+    -30.236195698743224,
+    1792016.2381914917
+  ],
+  "aoi_wgs84": {
+    "min_lon": 120.787,
+    "min_lat": 16.117,
+    "max_lon": 120.867,
+    "max_lat": 16.197
+  },
+  "elev_min": 146.8322296142578,
+  "elev_max": 1578.7637939453125,
+  "slope_mean_deg": 25.08529281616211,
+  "slope_max_deg": 56.102294921875,
+  "site": {
+    "label": "Brgy. Malico",
+    "lon": 120.8267,
+    "lat": 16.1573,
+    "row": 147.31309851274273,
+    "col": 142.71473580830934
+  },
+  "features": {
+    "buildings": 6,
+    "roads": 15
+  },
+  "hydrology": {
+    "max_accum": 2703,
+    "channel_cells": 3832,
+    "channel_threshold_cells": 84
+  },
+  "imagery": {
+    "zoom": 15,
+    "tiles": 72,
+    "attribution": "Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+  },
+  "susceptibility": {
+    "class_stats": {
+      "Very Low": {
+        "cells": 5953,
+        "percent": 7.0
+      },
+      "Low": {
+        "cells": 6016,
+        "percent": 7.1
+      },
+      "Moderate": {
+        "cells": 7045,
+        "percent": 8.3
+      },
+      "High": {
+        "cells": 14254,
+        "percent": 16.8
+      },
+      "Very High": {
+        "cells": 51388,
+        "percent": 60.7
+      }
+    },
+    "unstable_percent": 60.7
+  },
+  "runout": {
+    "n_sources": 25816,
+    "runout_cells": 43633,
+    "runout_percent": 51.5,
+    "max_runout_m": 1245.0,
+    "travel_angle_deg": 26.0
+  },
+  "scenarios": {
+    "dry": {
+      "name": "Dry",
+      "m": 0.1,
+      "unstable_percent": 6.5,
+      "class_stats": {
+        "Very Low": {
+          "cells": 21443,
+          "percent": 25.3
+        },
+        "Low": {
+          "cells": 20703,
+          "percent": 24.5
+        },
+        "Moderate": {
+          "cells": 17939,
+          "percent": 21.2
+        },
+        "High": {
+          "cells": 19108,
+          "percent": 22.6
+        },
+        "Very High": {
+          "cells": 5463,
+          "percent": 6.5
+        }
+      },
+      "n_sources": 5463,
+      "runout_percent": 23.0,
+      "max_runout_m": 989.0
+    },
+    "normal": {
+      "name": "Normal",
+      "m": 0.4,
+      "unstable_percent": 19.0,
+      "class_stats": {
+        "Very Low": {
+          "cells": 14923,
+          "percent": 17.6
+        },
+        "Low": {
+          "cells": 15420,
+          "percent": 18.2
+        },
+        "Moderate": {
+          "cells": 15837,
+          "percent": 18.7
+        },
+        "High": {
+          "cells": 22392,
+          "percent": 26.5
+        },
+        "Very High": {
+          "cells": 16084,
+          "percent": 19.0
+        }
+      },
+      "n_sources": 16084,
+      "runout_percent": 41.0,
+      "max_runout_m": 1275.0
+    },
+    "wet": {
+      "name": "Wet",
+      "m": 0.7,
+      "unstable_percent": 38.2,
+      "class_stats": {
+        "Very Low": {
+          "cells": 9798,
+          "percent": 11.6
+        },
+        "Low": {
+          "cells": 10280,
+          "percent": 12.1
+        },
+        "Moderate": {
+          "cells": 11388,
+          "percent": 13.5
+        },
+        "High": {
+          "cells": 20810,
+          "percent": 24.6
+        },
+        "Very High": {
+          "cells": 32380,
+          "percent": 38.2
+        }
+      },
+      "n_sources": 25816,
+      "runout_percent": 51.5,
+      "max_runout_m": 1245.0
+    },
+    "extreme": {
+      "name": "Extreme",
+      "m": 1.0,
+      "unstable_percent": 60.7,
+      "class_stats": {
+        "Very Low": {
+          "cells": 5953,
+          "percent": 7.0
+        },
+        "Low": {
+          "cells": 6016,
+          "percent": 7.1
+        },
+        "Moderate": {
+          "cells": 7045,
+          "percent": 8.3
+        },
+        "High": {
+          "cells": 14254,
+          "percent": 16.8
+        },
+        "Very High": {
+          "cells": 51388,
+          "percent": 60.7
+        }
+      },
+      "n_sources": 25816,
+      "runout_percent": 51.5,
+      "max_runout_m": 1245.0
+    }
+  },
+  "exposure": {
+    "dry": {
+      "buildings_total": 6,
+      "buildings_in_runout": 0,
+      "roads_total_m": 40405.0,
+      "roads_in_runout_m": 4507.0,
+      "roads_in_runout_pct": 11.2
+    },
+    "extreme": {
+      "buildings_total": 6,
+      "buildings_in_runout": 0,
+      "roads_total_m": 40405.0,
+      "roads_in_runout_m": 11551.0,
+      "roads_in_runout_pct": 28.6
+    },
+    "normal": {
+      "buildings_total": 6,
+      "buildings_in_runout": 0,
+      "roads_total_m": 40405.0,
+      "roads_in_runout_m": 9251.0,
+      "roads_in_runout_pct": 22.9
+    },
+    "wet": {
+      "buildings_total": 6,
+      "buildings_in_runout": 0,
+      "roads_total_m": 40405.0,
+      "roads_in_runout_m": 11551.0,
+      "roads_in_runout_pct": 28.6
+    }
+  },
+  "diagnostics": {
+    "dem_no_nan": true,
+    "dem_no_zero_edge": true,
+    "slope_realistic": true,
+    "slope_mean_steep": true,
+    "fs_finite": true,
+    "runout_present": true,
+    "sources_present": true,
+    "viewer:terrain.bin": true,
+    "viewer:terrain.json": true,
+    "viewer:tex_hillshade.png": true,
+    "viewer:tex_slope.png": true,
+    "viewer:tex_susc_dry.png": true,
+    "viewer:tex_runout_dry.png": true,
+    "viewer:tex_susc_normal.png": true,
+    "viewer:tex_runout_normal.png": true,
+    "viewer:tex_susc_wet.png": true,
+    "viewer:tex_runout_wet.png": true,
+    "viewer:tex_susc_extreme.png": true,
+    "viewer:tex_runout_extreme.png": true
+  }
+}

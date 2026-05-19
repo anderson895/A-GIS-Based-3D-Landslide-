@@ -1,0 +1,61 @@
+# =============================================================================
+#  GIS-Based 3D Landslide Hazard Visualization Model
+#  Study area: Malico, San Nicolas, Pangasinan, Philippines
+#
+#  Every parameter the pipeline uses lives here. Edit this file, re-run the
+#  pipeline, and every output (rasters, web viewer, thesis figures) updates.
+# =============================================================================
+
+project:
+  name: "GIS-Based 3D Landslide Hazard Visualization Model"
+  area: "Malico, San Nicolas, Pangasinan, Philippines"
+
+# --- Study site --------------------------------------------------------------
+site:
+  # Barangay Malico centre (WGS84). Source: PhilAtlas / Wikimapia.
+  center_lat: 16.1573
+  center_lon: 120.8267
+  label: "Brgy. Malico"
+
+# --- Area of interest (AOI) --------------------------------------------------
+# Bounding box in WGS84 degrees. The DEM is clipped to this box.
+# Default ~8.5 x 8.5 km window centred on Malico, covering the slopes along
+# the Villa Verde / Pangasinan-Nueva Vizcaya road.
+aoi:
+  min_lon: 120.787
+  min_lat: 16.117
+  max_lon: 120.867
+  max_lat: 16.197
+
+# --- Digital Elevation Model -------------------------------------------------
+dem:
+  source: "Copernicus GLO-30 DSM"
+  # Public AWS Open Data bucket - no API key required.
+  tile_url: "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N16_00_E120_00_DEM/Copernicus_DSM_COG_10_N16_00_E120_00_DEM.tif"
+  target_epsg: 32651          # UTM Zone 51N - metric grid for slope analysis
+
+# --- Geotechnical parameters (infinite-slope stability model) ----------------
+# These drive the Factor of Safety (FS) computation. Defaults are typical
+# values for weathered residual soil on volcanic/sedimentary terrain.
+# Calibrate against MGB geohazard data or field/lab values for the final study.
+geotech:
+  cohesion_kpa: 5.0             # effective soil cohesion c'  (kN/m^2)
+  friction_angle_deg: 30.0      # effective friction angle  phi'
+  unit_weight_kn_m3: 18.0       # moist soil unit weight  gamma
+  water_unit_weight_kn_m3: 9.81 # unit weight of water  gamma_w
+  soil_depth_m: 2.0             # depth to failure plane  z
+  groundwater_ratio: 0.5        # m = water-table height / soil depth (0=dry,1=saturated)
+
+# --- Runout / sediment-transport model --------------------------------------
+runout:
+  travel_angle_deg: 26.0        # reach (Fahrboeschung) angle - energy-line slope
+  source_fs_threshold: 1.0      # cells with FS below this can initiate failure
+  source_slope_min_deg: 30.0    # ...and must be at least this steep
+  deposition_slope_deg: 10.0    # flow is assumed to deposit below this slope
+
+# --- Visualization -----------------------------------------------------------
+viz:
+  vertical_exaggeration: 1.8    # default 3D exaggeration in the web viewer
+  hillshade_azimuth: 315
+  hillshade_altitude: 45
+  max_grid: 600                 # downsample terrain if wider/taller than this

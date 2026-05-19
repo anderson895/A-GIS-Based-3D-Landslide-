@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Landslide Hazard Visualization - Malico, San Nicolas, Pangasinan</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./lib/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="loader">
+    <div class="spinner"></div>
+    <div id="loader-text">Loading terrain model&hellip;</div>
+  </div>
+
+  <div id="scene"></div>
+
+  <div id="precision-indicator">Precision zoom (Ctrl)</div>
+
+  <header id="title">
+    <h1>GIS-Based 3D Landslide Hazard Visualization Model</h1>
+    <p>Malico, San Nicolas, Pangasinan &mdash; Copernicus GLO-30 terrain &middot; OpenStreetMap features</p>
+  </header>
+
+  <!-- Layer + scenario panel -->
+  <aside id="panel">
+    <section>
+      <h2>Display Mode</h2>
+      <p class="hint" style="margin-top:0">Current: <b id="mode-indicator">Plain (schematic)</b></p>
+      <button id="plain-toggle" class="mode-btn">Switch to Detailed</button>
+    </section>
+    <section>
+      <h2>Hazard Layer</h2>
+      <div id="layers"></div>
+    </section>
+    <section>
+      <h2>Rainfall Scenario</h2>
+      <div id="scenarios"></div>
+      <p class="hint scenario-hint">Controls the Susceptibility and Runout layers.</p>
+    </section>
+    <section>
+      <h2>Active Layer</h2>
+      <p id="layer-desc">&mdash;</p>
+      <div id="legend"></div>
+    </section>
+    <section>
+      <h2>Live Runout Simulation</h2>
+      <p class="hint" style="margin-top:0">~1,200 debris particles flow downhill in real time from steep slopes. Status: <b id="sim-status">Idle</b></p>
+      <div class="btn-row">
+        <button id="sim-play">Play</button>
+        <button id="sim-reset">Reset</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>View Controls</h2>
+      <label class="ctrl">
+        Vertical exaggeration: <span id="exag-val">1.8&times;</span>
+        <input type="range" id="exag" min="1" max="5" step="0.1" value="1.8" />
+      </label>
+      <label class="ctrl">
+        Sun direction: <span id="sun-val">315&deg;</span>
+        <input type="range" id="sun" min="0" max="360" step="5" value="315" />
+      </label>
+      <label class="ctrl checkbox">
+        <input type="checkbox" id="features-toggle" checked />
+        Show buildings &amp; roads
+      </label>
+      <label class="ctrl checkbox">
+        <input type="checkbox" id="marker-toggle" checked />
+        Show Brgy. Malico marker
+      </label>
+      <div class="btn-row">
+        <button data-preset="oblique">Oblique</button>
+        <button data-preset="top">Top-down</button>
+        <button data-preset="side">Side</button>
+      </div>
+      <div class="btn-row">
+        <button id="screenshot">Screenshot</button>
+        <button id="reset">Reset</button>
+      </div>
+    </section>
+  </aside>
+
+  <!-- Statistics panel -->
+  <aside id="stats">
+    <h2>Study Area Statistics</h2>
+    <div id="stats-body"></div>
+    <h2 style="margin-top:14px">Exposure (current scenario)</h2>
+    <div id="exposure-body"></div>
+    <p class="hint">Drag to orbit &middot; scroll to zoom &middot; right-drag to pan</p>
+  </aside>
+
+  <script type="module" src="./main.js?v=3"></script>
+</body>
+</html>
