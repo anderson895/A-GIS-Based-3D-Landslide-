@@ -72,6 +72,46 @@ html, body {
 #panel section h2, #stats h2 { margin: 0 0 6px; }
 .ctrl { margin-bottom: 8px; }
 
+/* Custom scrollbar - matches the dark glass panel theme. WebKit (Chrome,
+   Edge, Safari) uses ::-webkit-scrollbar; Firefox uses scrollbar-width /
+   scrollbar-color. Both are scoped to the scrollable side panels so the
+   rest of the page (which doesn't scroll anyway) is unaffected. */
+#panel, #stats {
+  scrollbar-width: thin;
+  scrollbar-color: #4a5670 transparent;
+}
+#panel::-webkit-scrollbar,
+#stats::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+#panel::-webkit-scrollbar-track,
+#stats::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 8px;
+  margin: 4px 0;
+}
+#panel::-webkit-scrollbar-thumb,
+#stats::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3d4660 0%, #5a6580 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.2s;
+}
+#panel::-webkit-scrollbar-thumb:hover,
+#stats::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--accent2) 0%, var(--accent) 100%);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+#panel::-webkit-scrollbar-thumb:active,
+#stats::-webkit-scrollbar-thumb:active {
+  background: var(--accent);
+}
+#panel::-webkit-scrollbar-corner,
+#stats::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 h2 {
   margin: 0 0 8px;
   font-size: 11px;
