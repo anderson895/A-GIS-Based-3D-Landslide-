@@ -820,10 +820,39 @@ function buildEnvironmentFeatures() {
 // (their terrain isn't visible anyway). Color is also stored on the boundary
 // object so buildMinimap() can use the same hue on the 2D Leaflet view.
 // ---------------------------------------------------------------------------
-const BOUNDARY_WALL_HEIGHT = 3.0;       // world units; ~135 m of mountain
-const BOUNDARY_LABEL_HEIGHT = 6.0;
+const BOUNDARY_WALL_HEIGHT = 8.0;       // world units; tall enough to read
+const BOUNDARY_LABEL_HEIGHT = 12.0;
+
+// Liang-Barsky line clip of segment (x1,z1)->(x2,z2) against AOI rectangle
+// [-halfX, halfX] x [-halfZ, halfZ]. Returns clipped [x1',z1',e1', x2',z2',e2']
+// (with elevations linearly interpolated) or null if the segment misses the
+// rectangle entirely. This is what lets boundaries that pass THROUGH the AOI
+// (both endpoints outside, but the middle crosses) still render correctly.
+function _clipSegmentToAOI(x1, z1, e1, x2, z2, e2, halfX, halfZ) {
+  let t0 = 0, t1 = 1;
+  const dx = x2 - x1, dz = z2 - z1;
+  const p = [-dx, dx, -dz, dz];
+  const q = [x1 + halfX, halfX - x1, z1 + halfZ, halfZ - z1];
+  for (let i = 0; i < 4; i++) {
+    if (p[i] === 0) {
+      if (q[i] < 0) return null;
+    } else {
+      const t = q[i] / p[i];
+      if (p[i] < 0) { if (t > t1) return null; if (t > t0) t0 = t; }
+      else          { if (t < t0) return null; if (t < t1) t1 = t; }
+    }
+  }
+  return [
+    x1 + t0 * dx, z1 + t0 * dz, e1 + (e2 - e1) * t0,
+    x1 + t1 * dx, z1 + t1 * dz, e1 + (e2 - e1) * t1,
+  ];
+}
+
 function buildBoundaries() {
-  if (!features?.boundaries?.length) return;
+  if (!features?.boundaries?.length) {
+    console.warn('No boundary data available.');
+    return;
+  }
   boundariesGroup = new THREE.Group();
   const ws = features.world_scale;
   const minE = meta.elev_min;
@@ -832,7 +861,9 @@ function buildBoundaries() {
   const cellX = meta.cell_x_m, cellY = meta.cell_y_m;
   const halfX = (W - 1) / 2 * cellX * ws;
   const halfZ = (H - 1) / 2 * cellY * ws;
-  const inAOI = (x, z) => Math.abs(x) <= halfX && Math.abs(z) <= halfZ;
+
+  let totalRendered = 0;
+  let totalSkipped = 0;
 
   features.boundaries.forEach((b, idx) => {
     // Distinct hue per boundary using the golden-angle increment for
@@ -840,33 +871,38 @@ function buildBoundaries() {
     const hue = (idx * 137.508) % 360;
     const isMuni = b.admin_level <= 6;
     const color = new THREE.Color().setHSL(
-      hue / 360, isMuni ? 0.85 : 0.7, isMuni ? 0.55 : 0.52);
+      hue / 360, isMuni ? 0.95 : 0.85, isMuni ? 0.58 : 0.55);
     const colorHex = `#${color.getHexString()}`;
     b._color = colorHex;                          // shared with Leaflet
 
     const verts = b.world;        // [[wx, wz, elev], ...]
     const positions = [];
     const indices = [];
-    const inAOIWy = [];           // collect in-AOI world y for label placement
-    let inAOIxz = [];             // collect in-AOI xz for centroid
+    const inAOIWy = [];
+    let inAOIxz = [];
     let vi = 0;
+    let clippedSegs = 0;
     for (let i = 0; i < verts.length - 1; i++) {
       const [x1, z1, e1] = verts[i];
       const [x2, z2, e2] = verts[i + 1];
-      if (!(inAOI(x1, z1) && inAOI(x2, z2))) continue;
-      const y1 = (e1 - minE) * ws;
-      const y2 = (e2 - minE) * ws;
-      positions.push(x1, y1, z1);
-      positions.push(x1, y1 + BOUNDARY_WALL_HEIGHT, z1);
-      positions.push(x2, y2, z2);
-      positions.push(x2, y2 + BOUNDARY_WALL_HEIGHT, z2);
+      const clip = _clipSegmentToAOI(x1, z1, e1, x2, z2, e2, halfX, halfZ);
+      if (!clip) continue;
+      clippedSegs++;
+      const [cx1, cz1, ce1, cx2, cz2, ce2] = clip;
+      const y1 = (ce1 - minE) * ws;
+      const y2 = (ce2 - minE) * ws;
+      positions.push(cx1, y1, cz1);
+      positions.push(cx1, y1 + BOUNDARY_WALL_HEIGHT, cz1);
+      positions.push(cx2, y2, cz2);
+      positions.push(cx2, y2 + BOUNDARY_WALL_HEIGHT, cz2);
       indices.push(vi, vi + 1, vi + 2);
       indices.push(vi + 2, vi + 1, vi + 3);
       vi += 4;
-      inAOIxz.push([x1, z1]); inAOIxz.push([x2, z2]);
+      inAOIxz.push([cx1, cz1]); inAOIxz.push([cx2, cz2]);
       inAOIWy.push(y1, y2);
     }
-    if (positions.length === 0) return;          // boundary doesn't touch AOI
+    if (positions.length === 0) { totalSkipped++; return; }
+    totalRendered++;
 
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position',
@@ -874,27 +910,40 @@ function buildBoundaries() {
     geom.setIndex(indices);
     geom.computeVertexNormals();
     const mat = new THREE.MeshStandardMaterial({
-      color: color.getHex(), emissive: color.getHex(), emissiveIntensity: 0.55,
-      roughness: 0.4, side: THREE.DoubleSide,
-      transparent: true, opacity: 0.85,
+      color: color.getHex(), emissive: color.getHex(), emissiveIntensity: 0.85,
+      roughness: 0.3, metalness: 0.0, side: THREE.DoubleSide,
+      transparent: true, opacity: 0.92,
+      depthWrite: false,                  // avoid z-fighting on the terrain
     });
     const mesh = new THREE.Mesh(geom, mat);
+    mesh.renderOrder = 5;                 // draw above terrain & overlays
     boundariesGroup.add(mesh);
 
-    // Label: average of in-AOI vertices.
+    // Label: average of clipped (in-AOI) vertices.
     let lx = 0, lz = 0, ly = 0;
     for (const [x, z] of inAOIxz) { lx += x; lz += z; }
     for (const y of inAOIWy) ly += y;
     lx /= inAOIxz.length; lz /= inAOIxz.length; ly /= inAOIWy.length;
     const sprite = makeTextSprite(`${b.name} (AL${b.admin_level})`, {
-      bg: 'rgba(15,18,26,0.92)', stroke: colorHex });
+      bg: 'rgba(15,18,26,0.95)', stroke: colorHex });
     sprite.position.set(lx, ly + BOUNDARY_LABEL_HEIGHT, lz);
-    sprite.scale.set(28, 7, 1);
+    sprite.scale.set(34, 8.5, 1);
+    sprite.renderOrder = 6;
     boundariesGroup.add(sprite);
+    console.log(`  boundary ${b.name} (AL${b.admin_level}): `
+                + `${clippedSegs} segments rendered, color=${colorHex}`);
   });
 
   terrainGroup.add(boundariesGroup);
-  console.log(`Rendered ${boundariesGroup.children.length} boundary objects`);
+  console.log(`buildBoundaries: ${totalRendered} rendered, `
+              + `${totalSkipped} skipped (no AOI overlap). `
+              + `Total objects in group: ${boundariesGroup.children.length}.`);
+  if (totalRendered === 0) {
+    console.warn('WARNING: zero boundaries cross the AOI. The boundary fetch '
+      + 'may have pulled neighbouring admin units only. Re-fetch boundaries '
+      + 'after deleting data/raw/osm_boundaries.json to retry, or check that '
+      + 'OpenStreetMap has admin polygons mapped in this area.');
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -25,6 +25,9 @@ from docx.shared import Cm, Pt, RGBColor
 ROOT = Path(__file__).resolve().parent
 DOCS = ROOT / "docs"
 DOCS.mkdir(exist_ok=True)
+FIGURES_DIR = DOCS / "figures"
+SCREENSHOTS_DIR = DOCS / "screenshots"
+SCREENSHOTS_DIR.mkdir(exist_ok=True)
 OUT = DOCS / "Development_Documentation.docx"
 
 
@@ -149,6 +152,49 @@ def add_section_break(doc):
     doc.add_paragraph()
 
 
+def add_image(doc, path: Path, *, width_cm: float = 15.0, caption: str | None = None,
+              placeholder_hint: str | None = None):
+    """Embed a PNG image with optional italic caption underneath.
+
+    If the file does not exist, draws a clearly-marked placeholder paragraph
+    so the user knows exactly where to drop a screenshot.
+    """
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    if path.exists():
+        run = p.add_run()
+        try:
+            run.add_picture(str(path), width=Cm(width_cm))
+        except Exception as e:
+            err = p.add_run(f"[Could not embed {path.name}: {e}]")
+            err.italic = True
+            err.font.color.rgb = COLOR_ACCENT
+    else:
+        # Placeholder box for missing screenshots
+        rel = path.relative_to(ROOT).as_posix()
+        msg = f"[ SCREENSHOT PLACEHOLDER - drop image at:  {rel} ]"
+        run = p.add_run(msg)
+        run.bold = True
+        run.italic = True
+        run.font.color.rgb = COLOR_ACCENT
+        run.font.size = Pt(10)
+        if placeholder_hint:
+            hp = doc.add_paragraph()
+            hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            hr = hp.add_run(placeholder_hint)
+            hr.italic = True
+            hr.font.size = Pt(9)
+            hr.font.color.rgb = COLOR_MUTED
+    if caption:
+        cap = doc.add_paragraph()
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cr = cap.add_run(caption)
+        cr.italic = True
+        cr.font.size = Pt(9.5)
+        cr.font.color.rgb = COLOR_MUTED
+    return p
+
+
 # ---------------------------------------------------------------------------
 # Load project data (so the doc reports the current numbers).
 # ---------------------------------------------------------------------------
@@ -235,8 +281,9 @@ def add_toc_note(doc):
         "8. Scientific References",
         "9. Data Legitimacy Statement",
         "10. Output Statistics (latest run)",
-        "11. Reproducibility & Audit Trail",
-        "12. Appendix - File Manifest",
+        "11. Output Visualizations & Explanations  (figures + screenshots)",
+        "12. Reproducibility & Audit Trail",
+        "13. Appendix - File Manifest",
     ]
     for it in items:
         p = doc.add_paragraph(it)
@@ -883,8 +930,244 @@ def add_stats(doc, data):
     add_section_break(doc)
 
 
+def add_visualizations(doc, data):
+    """Section 11: embeds the matplotlib publication figures and provides
+    placeholder slots for 3D-viewer screenshots, each with an explanation
+    that grounds the picture back to the methodology."""
+    add_heading(doc, "11. Output Visualizations & Explanations", level=1)
+    add_para(doc,
+        "This section presents the visual outputs of the pipeline in two "
+        "groups: (A) the publication-quality 2D matplotlib figures that "
+        "ship under docs/figures/ and are auto-generated on every pipeline "
+        "run, and (B) screenshots of the interactive 3D viewer running in "
+        "the browser. Each figure / screenshot is paired with an explanation "
+        "linking it back to the data source and the equation that produced "
+        "it.", spacing_after=6)
+
+    # =====================================================================
+    # 11.A - matplotlib publication figures (auto-embedded)
+    # =====================================================================
+    add_para(doc, "11.A  Publication figures (auto-generated, 2D)",
+             bold=True, size=12, color=COLOR_ACCENT)
+    add_para(doc,
+        "These eight figures are produced by landslide/export_web.py at the "
+        "end of every pipeline run and saved under docs/figures/. They are "
+        "the canonical thesis-defense visualizations - reproducible "
+        "byte-for-byte from the same config.yaml.")
+
+    figures = [
+        ("fig_hillshade.png",
+         "Figure 11.1 - Shaded relief (hillshade) of the AOI",
+         "Standard USGS hillshade computed from the Copernicus GLO-30 DEM "
+         "using azimuth 315 deg (NW illumination) and altitude 45 deg. "
+         "Reveals the mountainous topography of Brgy. Malico: steep "
+         "ridge-and-valley dissection along the Caraballo Mountains, with "
+         "elevations ranging from ~147 m to ~1579 m within the AOI. This "
+         "figure is the base reference layer that all other hazard maps "
+         "are draped on top of."),
+
+        ("fig_slope.png",
+         "Figure 11.2 - Slope gradient map",
+         "Per-cell slope in degrees, derived from the finite-difference "
+         "gradient of the DEM. Green -> yellow -> red colour ramp. Slopes "
+         "above ~30 deg dominate the susceptibility map because they enter "
+         "the FS denominator (sin(beta)*cos(beta)) and increase the "
+         "driving shear stress. Steepest cells are found along the river "
+         "valleys and the road cuts."),
+
+        ("fig_channels.png",
+         "Figure 11.3 - Drainage channel network (D8 flow accumulation)",
+         "Channels are cells whose upstream contributing area exceeds the "
+         "threshold set in config.yaml. Computed by sorting all cells by "
+         "elevation (high -> low) and routing one unit of flow into each "
+         "cell's steepest downhill D8 neighbour. The channel network "
+         "highlights where surface water - and any mobilised debris - "
+         "concentrates."),
+
+        ("fig_susceptibility.png",
+         "Figure 11.4 - Landslide susceptibility (single scenario)",
+         "Five-class susceptibility map derived from the infinite-slope "
+         "Factor of Safety: FS > 2.0 = Very Low; 1.5-2.0 = Low; 1.25-1.5 "
+         "= Moderate; 1.0-1.25 = High; FS < 1.0 = Very High. The High and "
+         "Very High classes are where the model predicts shallow "
+         "translational failure can initiate under the rainfall scenario "
+         "shown."),
+
+        ("fig_scenarios.png",
+         "Figure 11.5 - Susceptibility comparison across all four "
+         "rainfall scenarios",
+         "A 2x2 panel that demonstrates how the unstable area expands as "
+         "the groundwater ratio m climbs from 0.10 (Dry) -> 1.00 (Extreme). "
+         "Pore-water pressure reduces the effective normal stress on the "
+         "failure plane, which is captured by the (gamma - m*gamma_w) term "
+         "in the FS numerator. This panel is the strongest visual "
+         "evidence that hazard escalates with rainfall in this terrain."),
+
+        ("fig_runout.png",
+         "Figure 11.6 - Energy-line runout footprint (single scenario)",
+         "Source pixels (red) are unstable + steep cells released top-down. "
+         "Travel pixels (orange) are cells reached by the energy-line "
+         "model with reach angle alpha (Fahrboeschung). Deposition pixels "
+         "(yellow) mark where the energy line catches the terrain. This is "
+         "the runout footprint that downstream exposure is computed against."),
+
+        ("fig_runout_scenarios.png",
+         "Figure 11.7 - Runout comparison across all four scenarios",
+         "Same 2x2 layout as Figure 11.5 but for the runout product. The "
+         "increase in source count + travel footprint between Dry and "
+         "Extreme is the visual answer to 'kung mag-tyfoon, hanggang saan "
+         "abot ang debris?'"),
+
+        ("fig_exposure.png",
+         "Figure 11.8 - Exposure summary (buildings & roads per scenario)",
+         "Bar chart showing, per scenario, the count of OSM buildings "
+         "whose centroid falls inside the runout footprint and the "
+         "kilometres of OSM road whose midpoint falls inside it. This is "
+         "the bridge between the physical hazard model and the social/ "
+         "infrastructure vulnerability discussion."),
+    ]
+    for fname, title, body in figures:
+        add_para(doc, title, bold=True, size=11, color=COLOR_TEAL)
+        add_para(doc, body, spacing_after=4)
+        add_image(doc, FIGURES_DIR / fname, width_cm=15.5, caption=fname)
+        doc.add_paragraph()
+
+    add_section_break(doc)
+
+    # =====================================================================
+    # 11.B - 3D viewer screenshots (user-supplied)
+    # =====================================================================
+    add_para(doc, "11.B  Interactive 3D viewer screenshots",
+             bold=True, size=12, color=COLOR_ACCENT)
+    add_para(doc,
+        "The screenshots below are captured from the live Three.js / WebGL "
+        "viewer running in the browser at http://localhost:8000/viewer/  "
+        "(or on Vercel). Each subsection shows the viewer set to a "
+        "specific Hazard Layer + scenario + camera so the visual matches "
+        "the explanation. To regenerate, open the viewer, pick the "
+        "indicated controls, press the in-app 'Screenshot' button, and "
+        "save the file under docs/screenshots/ with the filename shown.")
+    add_para(doc,
+        "Any screenshot file that does not yet exist will appear as an "
+        "orange [SCREENSHOT PLACEHOLDER ...] block in the doc - re-run "
+        "make_docx.py after dropping in the PNG to embed it.",
+        italic=True, color=COLOR_MUTED, size=10)
+
+    screenshots = [
+        ("screenshot_oblique_plain.png",
+         "Figure 11.9 - Default oblique view (Plain white terrain)",
+         "Schematic massing view: 'Plain (white)' hazard layer + trees "
+         "hidden + oblique camera. This is the default landing state of "
+         "the viewer. It shows the AOI's relief without any colour "
+         "overlay, which is useful as a clean canvas for thesis figures "
+         "and for explaining the terrain before introducing hazard data.",
+         "Layer: Plain (white) | Trees: Hidden | Preset: Oblique"),
+
+        ("screenshot_hillshade.png",
+         "Figure 11.10 - Hillshade hazard layer (3D)",
+         "Same shaded relief as Figure 11.1, but draped on the 3D terrain "
+         "with vertical exaggeration ~1.8x. Demonstrates the dissected "
+         "ridge-valley structure and confirms that the texture aligns "
+         "exactly with the elevation grid.",
+         "Layer: Hillshade | Preset: Oblique"),
+
+        ("screenshot_slope.png",
+         "Figure 11.11 - Slope gradient layer (3D)",
+         "Slope draped on terrain. Red areas mark the cells that dominate "
+         "FS (steep slopes drive sin(beta)*cos(beta) high). Useful to "
+         "show the audience *why* certain ridges show up red in the "
+         "susceptibility view.",
+         "Layer: Slope | Preset: Oblique"),
+
+        ("screenshot_channels.png",
+         "Figure 11.12 - Drainage channel network (3D)",
+         "Blue cells = D8 flow-accumulation channels overlaid on the "
+         "terrain. Visually confirms that channels follow the valley "
+         "axes, which is the qualitative sanity check for the hydrology "
+         "stage.",
+         "Layer: Channels | Preset: Oblique"),
+
+        ("screenshot_susceptibility_wet.png",
+         "Figure 11.13 - Susceptibility, Wet scenario (m = 0.70)",
+         "Five-class FS susceptibility under sustained-rainy-season "
+         "groundwater. Red (Very High) and orange (High) classes are the "
+         "model's prediction of where shallow failures can initiate at "
+         "m = 0.70.",
+         "Layer: Susceptibility | Scenario: Wet | Preset: Oblique"),
+
+        ("screenshot_susceptibility_extreme.png",
+         "Figure 11.14 - Susceptibility, Extreme scenario (m = 1.00)",
+         "Same map at typhoon / full-saturation conditions. Comparing "
+         "this with Figure 11.13 makes the rainfall-sensitivity argument "
+         "concretely visual.",
+         "Layer: Susceptibility | Scenario: Extreme | Preset: Oblique"),
+
+        ("screenshot_runout_extreme.png",
+         "Figure 11.15 - Energy-line runout, Extreme scenario (3D)",
+         "Red = source cells, orange = travel cells, yellow = "
+         "deposition cells, projected onto the 3D terrain. This is the "
+         "physical answer to 'kung mag-collapse, hanggang saan dadaloy "
+         "ang debris?' under the worst rainfall case.",
+         "Layer: Runout | Scenario: Extreme | Preset: Oblique"),
+
+        ("screenshot_satellite.png",
+         "Figure 11.16 - Esri World Imagery satellite layer (3D)",
+         "Live Esri ArcGIS World_Imagery tiles draped on the terrain. "
+         "Provides real-world visual context (vegetation, structures, "
+         "road) without requiring the user to install a separate GIS "
+         "tool.",
+         "Layer: Satellite | Preset: Oblique"),
+
+        ("screenshot_boundaries.png",
+         "Figure 11.17 - Administrative boundaries (sakop walls)",
+         "Each OSM admin polygon (admin_level 6 / 10) is rendered as a "
+         "low coloured wall draped on the terrain, with a label at its "
+         "in-AOI centroid. The same hue is used in the 2D minimap so the "
+         "two views are visually linked. Note: Malico itself has no "
+         "polygon in OSM (documented in Section 6.3).",
+         "Boundaries toggle: ON | Preset: Oblique"),
+
+        ("screenshot_minimap.png",
+         "Figure 11.18 - 2D Leaflet minimap (full OSM street detail)",
+         "Bottom-right panel of the viewer. Shows the AOI rectangle on "
+         "top of standard OpenStreetMap raster tiles, with every fetched "
+         "OSM feature (buildings, named roads, waterways, peaks, POIs) "
+         "and the coloured admin-boundary polygons overlaid. Provides "
+         "street-level detail that the offline 3D model cannot match.",
+         "Minimap toggle: ON | Internet required for tiles"),
+
+        ("screenshot_top_down.png",
+         "Figure 11.19 - Top-down view (Susceptibility, Wet)",
+         "Orthographic top-down camera preset, useful for direct "
+         "comparison against published 2D hazard maps (e.g. MGB Region 1 "
+         "1:10,000 geohazard sheet for San Nicolas).",
+         "Layer: Susceptibility | Scenario: Wet | Preset: Top-down"),
+
+        ("screenshot_simulation.png",
+         "Figure 11.20 - Live runout particle simulation (mid-frame)",
+         "~1,200 debris particles released from steep / unstable source "
+         "cells, advected downhill in real time using the local slope "
+         "vector field. The animation is qualitative (visual) but it "
+         "convinces a defense audience that the model is dynamic, not "
+         "just a static raster.",
+         "Sim Play: pressed | Camera: Oblique"),
+    ]
+    for fname, title, body, controls in screenshots:
+        add_para(doc, title, bold=True, size=11, color=COLOR_TEAL)
+        add_para(doc, body, spacing_after=2)
+        add_para(doc, f"Viewer controls: {controls}",
+                 italic=True, color=COLOR_MUTED, size=9.5)
+        add_image(doc, SCREENSHOTS_DIR / fname, width_cm=15.5,
+                  caption=fname,
+                  placeholder_hint="Tip: viewer 'Screenshot' button copies "
+                                   "an exact-size PNG to your clipboard / "
+                                   "downloads it - save it with the filename above.")
+        doc.add_paragraph()
+    add_section_break(doc)
+
+
 def add_reproducibility(doc, data):
-    add_heading(doc, "11. Reproducibility & Audit Trail", level=1)
+    add_heading(doc, "12. Reproducibility & Audit Trail", level=1)
     add_para(doc,
         "Anyone with the source repository and an internet connection can "
         "rebuild the entire model bit-for-bit using a single command:")
@@ -908,7 +1191,7 @@ def add_reproducibility(doc, data):
 
 
 def add_appendix(doc, data):
-    add_heading(doc, "12. Appendix - File Manifest", level=1)
+    add_heading(doc, "13. Appendix - File Manifest", level=1)
     add_para(doc, "Selected files generated by the latest pipeline run, "
         "with their byte sizes. Full SHA-256 hashes are in data/outputs/run_manifest.json.")
     outputs = [
@@ -979,6 +1262,7 @@ def main():
     add_references(doc, data)
     add_legitimacy(doc, data)
     add_stats(doc, data)
+    add_visualizations(doc, data)
     add_reproducibility(doc, data)
     add_appendix(doc, data)
 
