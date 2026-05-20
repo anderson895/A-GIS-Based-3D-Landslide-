@@ -2,8 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>3D Landslide Hazard Visualization - Malico, San Nicolas, Pangasinan</title>
+
+  <!-- PWA: makes the viewer installable on Chrome mobile / desktop -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#0f2033" />
+  <meta name="application-name" content="Malico 3D" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Malico 3D" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
+
   <link rel="stylesheet" href="./lib/leaflet.css" />
   <link rel="stylesheet" href="./style.css?v=12" />
   <script src="./lib/leaflet.js"></script>
@@ -169,5 +181,17 @@
   </div>
 
   <script type="module" src="./main.js?v=10"></script>
+
+  <!-- PWA service worker registration. Only runs over https:// or
+       http://localhost, so local file:// previews quietly skip it. -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('./sw.js')
+          .catch((err) => console.warn('SW registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>

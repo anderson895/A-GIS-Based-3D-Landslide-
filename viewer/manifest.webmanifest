@@ -1,0 +1,33 @@
+{
+  "name": "Malico Landslide Hazard 3D Viewer",
+  "short_name": "Malico 3D",
+  "description": "GIS-based 3D landslide hazard visualization for Barangay Malico, San Nicolas, Pangasinan.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f2033",
+  "theme_color": "#0f2033",
+  "lang": "en",
+  "categories": ["education", "science", "utilities"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

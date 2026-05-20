@@ -34,7 +34,9 @@
       "Bash(node --check /tmp/check.mjs)",
       "Bash(./.venv/Scripts/python.exe -m pip install python-docx)",
       "Bash(./.venv/Scripts/python.exe make_docx.py)",
-      "Bash(./.venv/Scripts/python.exe -c \"import json; t=json.load\\(open\\('viewer/data/terrain.json',encoding='utf-8'\\)\\); print\\('Layers:'\\); [print\\(' -', l['id'], '|', l['name']\\) for l in t['layers']]\")"
+      "Bash(./.venv/Scripts/python.exe -c \"import json; t=json.load\\(open\\('viewer/data/terrain.json',encoding='utf-8'\\)\\); print\\('Layers:'\\); [print\\(' -', l['id'], '|', l['name']\\) for l in t['layers']]\")",
+      "Bash(ls \"data/raw/\")",
+      "PowerShell(.venv\\\\Scripts\\\\python.exe scripts\\\\make_pwa_icons.py)"
     ]
   }
 }
