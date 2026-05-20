@@ -260,7 +260,128 @@ button.mode-btn:hover { filter: brightness(1.08); }
 }
 .leaflet-control-attribution a { color: var(--accent2); }
 
-@media (max-width: 1000px) {
-  #panel, #stats { width: 240px; }
-  #minimap-wrap { width: 280px; height: 240px; }
+/* =========================================================================
+   Floating action buttons (mobile only). Hidden on desktop, shown on phones
+   to let the user toggle the panels + minimap, which become bottom sheets.
+   ========================================================================= */
+.fab {
+  position: fixed;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  font-size: 20px; line-height: 1;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  display: none;            /* hidden on desktop */
+  align-items: center; justify-content: center;
+  z-index: 40;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  -webkit-tap-highlight-color: transparent;
+}
+.fab:active { transform: scale(0.94); }
+.fab.active { background: var(--accent); color: #fff; }
+.fab svg { width: 22px; height: 22px; }
+.fab.active svg { color: #fff; }
+
+.panel-close {
+  display: none;            /* hidden on desktop */
+  position: absolute;
+  top: 6px; right: 8px;
+  width: 34px; height: 34px;
+  border: 0; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+}
+.panel-close:hover { background: rgba(255,90,90,0.25); }
+.panel-close svg { width: 18px; height: 18px; }
+
+/* Minimap close link - SVG icon */
+.minimap-title a svg { width: 14px; height: 14px; vertical-align: middle; }
+
+/* =========================================================================
+   Tablet (1100 - 769px): narrower panels + smaller minimap.
+   ========================================================================= */
+@media (max-width: 1100px) and (min-width: 769px) {
+  #panel { width: 250px; padding: 12px 13px; }
+  #stats { width: 240px; padding: 12px 13px; }
+  #minimap-wrap { width: 300px; height: 240px; }
+  #title { max-width: calc(100vw - 540px); }
+}
+
+/* =========================================================================
+   Mobile (<=768px): panels become bottom-sheet drawers controlled by FABs.
+   The 3D scene goes fullscreen by default; user pops up panels as needed.
+   ========================================================================= */
+@media (max-width: 768px) {
+  /* Compact title bar at the top centre */
+  #title {
+    top: 10px;
+    padding: 6px 14px;
+    max-width: calc(100vw - 130px);
+    border-radius: 8px;
+  }
+  #title h1 { font-size: 12px; }
+  #title p  { font-size: 9.5px; margin-top: 2px; }
+
+  /* Show the floating buttons */
+  .fab        { display: flex; }
+  .fab-panel  { top: 12px; left: 12px; }
+  .fab-stats  { top: 12px; right: 12px; }
+  .fab-mini   { bottom: 14px; right: 14px; }
+
+  /* Show the in-panel close buttons */
+  .panel-close { display: flex; align-items: center; justify-content: center; }
+
+  /* Panels become full-width bottom sheets */
+  #panel, #stats {
+    top: auto;
+    left: 0; right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 75vh;
+    border-radius: 14px 14px 0 0;
+    border-bottom: 0;
+    padding: 18px 16px 24px;
+    transform: translateY(102%);          /* off-screen by default */
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 35;
+  }
+  #panel.open, #stats.open { transform: translateY(0); }
+
+  /* Stack the 3-up button rows as 2-up to fit narrow screens */
+  .btn-row { grid-template-columns: 1fr 1fr; }
+
+  /* Minimap: properly sized for phones, hidden by default; FAB toggles it.
+     Sits above the bottom FAB so it doesn't get covered by the button. */
+  #minimap-wrap {
+    width: calc(100vw - 24px);    /* almost full width */
+    max-width: 420px;             /* but cap on bigger phones */
+    height: 320px;                /* tall enough to actually read */
+    right: 12px; left: 12px;
+    bottom: 76px;                 /* clear the bottom-right FAB */
+    margin: 0 auto;
+    padding: 8px;
+    display: none;                /* off by default on phones */
+  }
+  #minimap-wrap.mobile-show { display: flex; }
+  .minimap-title { font-size: 10.5px; padding-bottom: 5px; }
+  .minimap-hint { display: none; }
+
+  /* Smaller padding inside sections to fit phone height */
+  #panel section + section { margin-top: 10px; }
+  h2 { font-size: 10.5px; }
+  .layer { padding: 7px 9px; font-size: 12.5px; }
+  .scenario { padding: 6px 4px; font-size: 11.5px; }
+}
+
+/* Tiny phones (<=380px): squeeze title, keep minimap full-width */
+@media (max-width: 380px) {
+  #title h1 { font-size: 11px; }
+  #title p  { display: none; }
+  #minimap-wrap { height: 260px; }
 }

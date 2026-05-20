@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3D Landslide Hazard Visualization - Malico, San Nicolas, Pangasinan</title>
   <link rel="stylesheet" href="./lib/leaflet.css" />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css?v=10" />
   <script src="./lib/leaflet.js"></script>
   <script type="importmap">
   {
@@ -25,6 +25,35 @@
 
   <div id="precision-indicator">Precision zoom (Ctrl)</div>
 
+  <!-- Mobile-only floating buttons: toggle the side panels as bottom sheets.
+       Icons are inline SVG (Lucide-style) so no external icon library or
+       CDN is required - keeps the viewer fully offline-capable. -->
+  <button class="fab fab-panel" id="fab-panel" aria-label="Toggle controls">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <line x1="4" y1="6"  x2="20" y2="6"/>
+      <line x1="4" y1="12" x2="20" y2="12"/>
+      <line x1="4" y1="18" x2="20" y2="18"/>
+    </svg>
+  </button>
+  <button class="fab fab-stats" id="fab-stats" aria-label="Toggle statistics">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 3v18h18"/>
+      <path d="M18 17V9"/>
+      <path d="M13 17V5"/>
+      <path d="M8 17v-3"/>
+    </svg>
+  </button>
+  <button class="fab fab-mini"  id="fab-mini"  aria-label="Toggle minimap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14.1 5.55a2 2 0 0 0 1.79 0l3.66-1.83A1 1 0 0 1 21 4.62v12.76a1 1 0 0 1-.55.9l-4.56 2.28a2 2 0 0 1-1.78 0l-4.22-2.11a2 2 0 0 0-1.78 0L4.45 20.28A1 1 0 0 1 3 19.38V6.62a1 1 0 0 1 .55-.9l4.56-2.28a2 2 0 0 1 1.78 0z"/>
+      <path d="M15 5.76v15"/>
+      <path d="M9 3.24v15"/>
+    </svg>
+  </button>
+
   <header id="title">
     <h1>GIS-Based 3D Landslide Hazard Visualization Model</h1>
     <p>Malico, San Nicolas, Pangasinan &mdash; Copernicus GLO-30 terrain &middot; OpenStreetMap features</p>
@@ -32,6 +61,13 @@
 
   <!-- Layer + scenario panel -->
   <aside id="panel">
+    <button class="panel-close" data-close="panel" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6"  y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
     <section>
       <h2>Trees</h2>
       <p class="hint" style="margin-top:0">Currently: <b id="mode-indicator">Hidden</b></p>
@@ -108,6 +144,7 @@
 
   <!-- Statistics panel -->
   <aside id="stats">
+    <button class="panel-close" data-close="stats" aria-label="Close">&times;</button>
     <h2>Study Area Statistics</h2>
     <div id="stats-body"></div>
     <h2 style="margin-top:14px">Exposure (current scenario)</h2>
@@ -119,12 +156,18 @@
   <div id="minimap-wrap">
     <div class="minimap-title">
       <span>2D OSM map - full street detail</span>
-      <a href="#" id="minimap-close" title="Hide minimap">&times;</a>
+      <a href="#" id="minimap-close" title="Hide minimap" aria-label="Hide minimap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6"  y2="18"/>
+          <line x1="6"  y1="6" x2="18" y2="18"/>
+        </svg>
+      </a>
     </div>
     <div id="minimap"></div>
     <p class="minimap-hint">Click any feature for details.</p>
   </div>
 
-  <script type="module" src="./main.js?v=8"></script>
+  <script type="module" src="./main.js?v=10"></script>
 </body>
 </html>

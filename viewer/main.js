@@ -1025,7 +1025,18 @@ function buildMinimap() {
 function toggleMinimap(show) {
   const el = document.getElementById('minimap-wrap');
   if (!el) return;
-  el.style.display = show ? 'block' : 'none';
+  // Desktop path: inline-style toggle (CSS default is display:flex via the
+  // rule on #minimap-wrap). Mobile path: also clear inline style and let the
+  // .mobile-show class on the wrapper decide visibility instead.
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  if (isMobile) {
+    el.style.display = '';                    // hand control back to CSS
+    el.classList.toggle('mobile-show', !!show);
+    const fab = document.getElementById('fab-mini');
+    if (fab) fab.classList.toggle('active', !!show);
+  } else {
+    el.style.display = show ? 'flex' : 'none';
+  }
   if (show && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 80);
 }
 
@@ -1294,6 +1305,54 @@ function buildUI() {
   document.getElementById('plain-toggle').addEventListener('click',
     () => setPlainMode(!plainMode));
   setPlainMode(plainMode);    // apply default plain state on load
+
+  // -------------------------------------------------------------------------
+  // Mobile FAB handlers: convert side panels to bottom-sheet drawers on
+  // narrow screens. Hidden via CSS on desktop, so the listeners are no-ops
+  // unless the user is on a phone.
+  // -------------------------------------------------------------------------
+  const panelEl   = document.getElementById('panel');
+  const statsEl   = document.getElementById('stats');
+  const miniEl    = document.getElementById('minimap-wrap');
+  const fabPanel  = document.getElementById('fab-panel');
+  const fabStats  = document.getElementById('fab-stats');
+  const fabMini   = document.getElementById('fab-mini');
+
+  function closeAllSheets() {
+    panelEl.classList.remove('open');
+    statsEl.classList.remove('open');
+    fabPanel.classList.remove('active');
+    fabStats.classList.remove('active');
+  }
+  fabPanel?.addEventListener('click', () => {
+    const willOpen = !panelEl.classList.contains('open');
+    closeAllSheets();
+    if (willOpen) {
+      panelEl.classList.add('open');
+      fabPanel.classList.add('active');
+    }
+  });
+  fabStats?.addEventListener('click', () => {
+    const willOpen = !statsEl.classList.contains('open');
+    closeAllSheets();
+    if (willOpen) {
+      statsEl.classList.add('open');
+      fabStats.classList.add('active');
+    }
+  });
+  fabMini?.addEventListener('click', () => {
+    // Mirror Leaflet visibility in the View Controls checkbox + use the
+    // canonical toggleMinimap() so desktop/mobile state stays consistent.
+    const willShow = !miniEl.classList.contains('mobile-show');
+    toggleMinimap(willShow);
+    const cbox = document.getElementById('minimap-toggle');
+    if (cbox) cbox.checked = willShow;
+  });
+
+  // In-panel close buttons (mobile only - hidden via CSS on desktop)
+  document.querySelectorAll('.panel-close').forEach(btn => {
+    btn.addEventListener('click', () => closeAllSheets());
+  });
 
   renderStats();
 }
