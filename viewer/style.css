@@ -50,23 +50,27 @@ html, body {
   color: var(--muted);
 }
 
-/* Side panels */
+/* Side panels - flush to the top edge so the full screen height is usable
+   without scrolling on common laptop / monitor heights. The centred title
+   card stays clear of the left/right panel columns horizontally. */
 #panel, #stats {
   position: fixed;
-  top: 90px;
+  top: 14px;
   width: 300px;
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 10px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   backdrop-filter: blur(8px);
   z-index: 10;
-  max-height: calc(100vh - 110px);
+  max-height: calc(100vh - 28px);
   overflow-y: auto;
 }
 #panel { left: 16px; }
 #stats { right: 16px; width: 280px; }
-#panel section + section { margin-top: 14px; }
+#panel section + section { margin-top: 11px; }
+#panel section h2, #stats h2 { margin: 0 0 6px; }
+.ctrl { margin-bottom: 8px; }
 
 h2 {
   margin: 0 0 8px;
