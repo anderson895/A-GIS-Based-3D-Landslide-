@@ -38,9 +38,7 @@ output files — full reproducibility.
 - Live scenario statistics + exposure read-out
 
 ---
-
 ## Quick start
-
 ```powershell
 # 1. (one-time) create the virtual environment + install dependencies
 python -m venv .venv
