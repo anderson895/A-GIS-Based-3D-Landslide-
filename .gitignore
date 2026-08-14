@@ -9,7 +9,7 @@ __pycache__/
 # data/processed/*.npy
 # data/outputs/*.bin
 # data/outputs/*.png
-
+/.claude/
 # Keep folder structure
 !data/raw/.gitkeep
 !data/processed/.gitkeep
