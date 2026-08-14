@@ -213,6 +213,13 @@ button.mode-btn:hover { filter: brightness(1.08); }
 .stat b { color: var(--text); }
 .stat.bold b { color: var(--accent-soft); }
 
+/* Model Information rows carry longer values ("Infinite-Slope Factor of
+   Safety") than the numeric stat rows, so let the value wrap and stay
+   right-aligned instead of crushing the label. */
+.stat.model { align-items: flex-start; gap: 12px; }
+.stat.model span { flex: none; }
+.stat.model b { text-align: right; }
+
 .hint { margin-top: 12px; font-size: 11px; color: var(--muted); font-style: italic; }
 
 /* Precision-zoom indicator */

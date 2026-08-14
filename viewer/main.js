@@ -1242,6 +1242,34 @@ function renderStats() {
   document.getElementById('exposure-body').innerHTML =
     expRows.map(([k, v]) =>
       `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join('');
+
+  const aoi = meta.aoi_wgs84;
+  const modelRows = [
+    ['AOI (WGS84)',
+     `${aoi.min_lon.toFixed(3)}&deg;E &ndash; ${aoi.max_lon.toFixed(3)}&deg;E<br>` +
+     `${aoi.min_lat.toFixed(3)}&deg;N &ndash; ${aoi.max_lat.toFixed(3)}&deg;N`],
+    ['AOI area', `~${aoiAreaKm2(aoi).toFixed(0)} km&sup2;`],
+    ['DEM', 'Copernicus GLO-30'],
+    ['Projection', 'UTM Zone 51N'],
+    ['Hydrology', 'D8 Flow Routing'],
+    ['Susceptibility', 'Infinite-Slope Factor of Safety'],
+    ['Runout', 'Energy-Line (Fahrb&ouml;schung)'],
+  ];
+  document.getElementById('model-body').innerHTML =
+    modelRows.map(([k, v]) =>
+      `<div class="stat model"><span>${k}</span><b>${v}</b></div>`).join('');
+}
+
+// Planar approximation of the AOI bounding-box area. At this latitude and
+// box size (~8.5 km) the error against a geodesic computation is well under
+// 0.1 %, which is far finer than the "~" the figure is reported with.
+function aoiAreaKm2(aoi) {
+  const KM_PER_DEG_LAT = 110.574;
+  const KM_PER_DEG_LON = 111.320;
+  const midLatRad = ((aoi.min_lat + aoi.max_lat) / 2) * Math.PI / 180;
+  const heightKm = (aoi.max_lat - aoi.min_lat) * KM_PER_DEG_LAT;
+  const widthKm  = (aoi.max_lon - aoi.min_lon) * KM_PER_DEG_LON * Math.cos(midLatRad);
+  return widthKm * heightKm;
 }
 
 function buildUI() {

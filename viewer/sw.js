@@ -9,12 +9,12 @@
 // Bump CACHE_VERSION whenever any precached file changes so old caches
 // are evicted on the next visit.
 
-const CACHE_VERSION = 'malico-3d-v1';
+const CACHE_VERSION = 'malico-3d-v2';
 const PRECACHE = [
   './',
   './index.html',
-  './style.css?v=12',
-  './main.js?v=10',
+  './style.css?v=13',
+  './main.js?v=11',
   './manifest.webmanifest',
   './lib/three.module.js',
   './lib/OrbitControls.js',

@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
 
   <link rel="stylesheet" href="./lib/leaflet.css" />
-  <link rel="stylesheet" href="./style.css?v=12" />
+  <link rel="stylesheet" href="./style.css?v=13" />
   <script src="./lib/leaflet.js"></script>
   <script type="importmap">
   {
@@ -157,10 +157,12 @@
   <!-- Statistics panel -->
   <aside id="stats">
     <button class="panel-close" data-close="stats" aria-label="Close">&times;</button>
-    <h2>Study Area Statistics</h2>
+    <h2>AOI Statistics</h2>
     <div id="stats-body"></div>
     <h2 style="margin-top:14px">Exposure (current scenario)</h2>
     <div id="exposure-body"></div>
+    <h2 style="margin-top:14px">Model Information</h2>
+    <div id="model-body"></div>
     <p class="hint">Drag to orbit &middot; scroll to zoom &middot; right-drag to pan</p>
   </aside>
 
@@ -180,7 +182,7 @@
     <p class="minimap-hint">Click any feature for details.</p>
   </div>
 
-  <script type="module" src="./main.js?v=10"></script>
+  <script type="module" src="./main.js?v=11"></script>
 
   <!-- PWA service worker registration. Only runs over https:// or
        http://localhost, so local file:// previews quietly skip it. -->
